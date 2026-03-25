@@ -22,6 +22,9 @@ class DeviceModel {
   }
 
   processData(frame) {
+    if (frame[1] === 0x71) {
+      console.log(frame);
+    }
     if (frame[1] === 0x61) {
       const angX =
         (this.getSignInt16((frame[15] << 8) | frame[14]) / 32768) * 180;
@@ -30,9 +33,9 @@ class DeviceModel {
       const angZ =
         (this.getSignInt16((frame[19] << 8) | frame[18]) / 32768) * 180;
       const deviceData = {
-        AngX: Number(angX.toFixed(3)),
-        AngY: Number(angY.toFixed(3)),
-        AngZ: Number(angZ.toFixed(3)),
+        x: Number(angX.toFixed(3)),
+        y: Number(angY.toFixed(3)),
+        z: Number(angZ.toFixed(3)),
       };
       this.callback(deviceData);
     } else {
