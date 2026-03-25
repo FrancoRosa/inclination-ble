@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Array Monitor</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <style>
+        body { margin: 0; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
+        #container { display: flex; height: 100vh; width: 100vw; }
+        .sensor-card { flex: 1; position: relative; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .label { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        .status { color: #ff4444; font-weight: bold; margin-top: 5px; }
+        canvas { width: 100% !important; height: 100% !important; }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div class="sensor-card" id="card-dev1">
+        <div class="label">
+            <div>Device: 1</div>
+            <div id="status-dev1" class="status">Connecting...</div>
+        </div>
+    </div>
+    <div class="sensor-card" id="card-dev2">
+        <div class="label">
+            <div>Device: 2</div>
+            <div id="status-dev2" class="status">Connecting...</div>
+        </div>
+    </div>
+    <div class="sensor-card" id="card-dev3">
+        <div class="label">
+            <div>Device: 3</div>
+            <div id="status-dev3" class="status">Connecting...</div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    const socket = io("http://localhost:10002"); // Update with your server URL
+    const devices = ['dev1', 'dev2', 'dev3'];
+    const scenes = {};
+
+    // Helper to convert degrees to radians
+    const toRad = (deg) => deg * (Math.PI / 180);
+
+    function init() {
+        devices.forEach(id => {
+            const container = document.getElementById(`card-${id}`);
+            
+            // Scene Setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 2);
+            scene.add(light, new THREE.AmbientLight(0x404040));
+
+            // Cube
+            const geometry = new THREE.BoxGeometry(1.5, 0.5, 2);
+            const material = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            camera.position.z = 5;
+            scenes[id] = { scene, camera, renderer, cube };
+        });
+
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        Object.values(scenes).forEach(s => s.renderer.render(s.scene, s.camera));
+    }
+
+    socket.on("sensors", (data) => {
+        devices.forEach(id => {
+            const statusEl = document.getElementById(`status-${id}`);
+            const cube = scenes[id].cube;
+
+            if (data[id] && typeof data[id].x === 'number') {
+                statusEl.innerText = `X: ${data[id].x}° | Y: ${data[id].y}° | Z: ${data[id].z}°`;
+                statusEl.style.color = "#00ff88";
+                
+                // Update rotation
+                cube.rotation.x = toRad(data[id].x);
+                cube.rotation.y = toRad(data[id].y);
+                cube.rotation.z = toRad(data[id].z);
+                cube.visible = true;
+            } else {
+                statusEl.innerText = "Sensor not found";
+                statusEl.style.color = "#ff4444";
+                cube.visible = false;
+            }
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        devices.forEach(id => {
+            const container = document.getElementById(`card-${id}`);
+            const s = scenes[id];
+            s.camera.aspect = container.clientWidth / container.clientHeight;
+            s.camera.updateProjectionMatrix();
+            s.renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    });
+
+    init();
+</script>
+</body>
+</html>
