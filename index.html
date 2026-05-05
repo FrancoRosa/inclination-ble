@@ -31,15 +31,15 @@
     <h3>Sensor Offsets</h3>
     <div class="control-group">
         <label>Boom Offset: <span id="v-boom" class="val">0°</span></label>
-        <input type="range" id="off-boom" min="-90" max="90" value="0">
+        <input type="range" id="off-boom" min="-180" max="180" value="0">
     </div>
     <div class="control-group">
         <label>Stick Offset: <span id="v-stick" class="val">0°</span></label>
-        <input type="range" id="off-stick" min="-90" max="90" value="0">
+        <input type="range" id="off-stick" min="-180" max="180" value="0">
     </div>
     <div class="control-group">
         <label>Bucket Offset: <span id="v-bucket" class="val">0°</span></label>
-        <input type="range" id="off-bucket" min="-90" max="90" value="0">
+        <input type="range" id="off-bucket" min="-180" max="180" value="0">
     </div>
     <hr style="width:100%; border:0; border-top:1px solid #444">
     <div id="status">Waiting for Socket...</div>
@@ -59,6 +59,27 @@
 
     let scene, camera, renderer, controls, modelParts = {};
     let sensorData = { dev1: 0, dev2: 0, dev3: 0 };
+
+    // localStorage keys
+    const STORAGE_KEYS = {
+        boom: 'offset_boom',
+        stick: 'offset_stick',
+        bucket: 'offset_bucket'
+    };
+
+    function loadOffsetsFromStorage() {
+        const boom = localStorage.getItem(STORAGE_KEYS.boom) || '0';
+        const stick = localStorage.getItem(STORAGE_KEYS.stick) || '0';
+        const bucket = localStorage.getItem(STORAGE_KEYS.bucket) || '0';
+
+        document.getElementById('off-boom').value = boom;
+        document.getElementById('off-stick').value = stick;
+        document.getElementById('off-bucket').value = bucket;
+    }
+
+    function saveOffsetToStorage(key, value) {
+        localStorage.setItem(key, value);
+    }
 
     function init() {
         scene = new THREE.Scene();
@@ -98,6 +119,20 @@
             });
             
             console.log("Model loaded. Found parts:", Object.keys(modelParts));
+        });
+
+        // Load offsets from localStorage
+        loadOffsetsFromStorage();
+
+        // Add event listeners to save offsets when changed
+        document.getElementById('off-boom').addEventListener('change', (e) => {
+            saveOffsetToStorage(STORAGE_KEYS.boom, e.target.value);
+        });
+        document.getElementById('off-stick').addEventListener('change', (e) => {
+            saveOffsetToStorage(STORAGE_KEYS.stick, e.target.value);
+        });
+        document.getElementById('off-bucket').addEventListener('change', (e) => {
+            saveOffsetToStorage(STORAGE_KEYS.bucket, e.target.value);
         });
 
         animate();

@@ -14,9 +14,13 @@ const io = new Server(server, {
 server.listen(10002);
 
 const sensors = { dev1: {}, dev2: {}, dev3: {} };
+const active = { dev1: false, dev2: false, dev3: false };
+
+
 
 function updateData(data, name) {
   sensors[name] = data;
+  active[name] = true
 }
 
 setInterval(() => {
