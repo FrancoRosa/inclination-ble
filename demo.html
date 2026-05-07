@@ -1,137 +1,222 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sensor Array Monitor</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
         }
+      }
     </script>
     <style>
-        body { margin: 0; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
-        #container { display: flex; height: 100vh; width: 100vw; }
-        .sensor-card { flex: 1; position: relative; border-right: 1px solid #333; }
-        .label-ui { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        .status { color: #ff4444; font-weight: bold; margin-top: 5px; font-size: 0.9em; }
-        
-        /* Axis Labels Styling */
-        .axis-label { color: white; font-size: 12px; font-weight: bold; padding: 2px; background: rgba(0,0,0,0.5); }
+      body {
+        margin: 0;
+        background: #121212;
+        color: white;
+        font-family: sans-serif;
+        overflow: hidden;
+      }
+      #container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+      .sensor-card {
+        flex: 1;
+        position: relative;
+        border-right: 1px solid #333;
+      }
+      .label-ui {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .status {
+        color: #ff4444;
+        font-weight: bold;
+        margin-top: 5px;
+        font-size: 0.9em;
+      }
+
+      /* Axis Labels Styling */
+      .axis-label {
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 2px;
+        background: rgba(0, 0, 0, 0.5);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="container">
+      <div class="sensor-card" id="card-dev1">
+        <div class="label-ui">
+          Device 1
+          <div id="status-dev1" class="status">Offline</div>
+        </div>
+      </div>
+      <div class="sensor-card" id="card-dev2">
+        <div class="label-ui">
+          Device 2
+          <div id="status-dev2" class="status">Offline</div>
+        </div>
+      </div>
+      <div class="sensor-card" id="card-dev3">
+        <div class="label-ui">
+          Device 3
+          <div id="status-dev3" class="status">Offline</div>
+        </div>
+      </div>
+      <div class="sensor-card" id="card-dev4">
+        <div class="label-ui">
+          Device 4
+          <div id="status-dev4" class="status">Offline</div>
+        </div>
+      </div>
+    </div>
 
-<div id="container">
-    <div class="sensor-card" id="card-dev1"><div class="label-ui">Device 1<div id="status-dev1" class="status">Offline</div></div></div>
-    <div class="sensor-card" id="card-dev2"><div class="label-ui">Device 2<div id="status-dev2" class="status">Offline</div></div></div>
-    <div class="sensor-card" id="card-dev3"><div class="label-ui">Device 3<div id="status-dev3" class="status">Offline</div></div></div>
-</div>
+    <script type="module">
+      import * as THREE from "three";
+      import {
+        CSS2DRenderer,
+        CSS2DObject,
+      } from "three/addons/renderers/CSS2DRenderer.js";
 
-<script type="module">
-    import * as THREE from 'three';
-    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+      const params = new URLSearchParams(window.location.search);
 
-    const socket = io("http://localhost:10002"); 
-    const devices = ['dev1', 'dev2', 'dev3'];
-    const scenes = {};
-    const toRad = (deg) => deg * (Math.PI / 180);
+      const wsTarget = params.get("w") || "localhost:10002";
 
-    function createAxisLabel(text, color, position) {
-        const div = document.createElement('div');
-        div.className = 'axis-label';
+      // Create socket connection
+      const socket = io(`http://${wsTarget}`);
+
+      const devices = ["dev1", "dev2", "dev3", "dev4"];
+      const scenes = {};
+      const toRad = (deg) => deg * (Math.PI / 180);
+
+      function createAxisLabel(text, color, position) {
+        const div = document.createElement("div");
+        div.className = "axis-label";
         div.textContent = text;
         div.style.color = color;
         const label = new CSS2DObject(div);
         label.position.copy(position);
         return label;
-    }
+      }
 
-    function init() {
-        devices.forEach(id => {
-            const container = document.getElementById(`card-${id}`);
-            
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(3, 3, 5);
-            camera.lookAt(0, 0, 0);
+      function init() {
+        devices.forEach((id) => {
+          const container = document.getElementById(`card-${id}`);
 
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer.domElement);
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(
+            75,
+            container.clientWidth / container.clientHeight,
+            0.1,
+            1000,
+          );
+          camera.position.set(3, 3, 5);
+          camera.lookAt(0, 0, 0);
 
-            // Label Renderer
-            const labelRenderer = new CSS2DRenderer();
-            labelRenderer.setSize(container.clientWidth, container.clientHeight);
-            labelRenderer.domElement.style.position = 'absolute';
-            labelRenderer.domElement.style.top = '0px';
-            container.appendChild(labelRenderer.domElement);
+          const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+          });
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          container.appendChild(renderer.domElement);
 
-            // Visual Helpers
-            const axesHelper = new THREE.AxesHelper(3);
-            scene.add(axesHelper);
+          // Label Renderer
+          const labelRenderer = new CSS2DRenderer();
+          labelRenderer.setSize(container.clientWidth, container.clientHeight);
+          labelRenderer.domElement.style.position = "absolute";
+          labelRenderer.domElement.style.top = "0px";
+          container.appendChild(labelRenderer.domElement);
 
-            // Add axis text labels
-            scene.add(createAxisLabel('X', '#ff3333', new THREE.Vector3(3.2, 0, 0)));
-            scene.add(createAxisLabel('Y', '#33ff33', new THREE.Vector3(0, 3.2, 0)));
-            scene.add(createAxisLabel('Z', '#3333ff', new THREE.Vector3(0, 0, 3.2)));
+          // Visual Helpers
+          const axesHelper = new THREE.AxesHelper(3);
+          scene.add(axesHelper);
 
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(1, 1, 5);
-            scene.add(light, new THREE.AmbientLight(0x404040));
+          // Add axis text labels
+          scene.add(
+            createAxisLabel("X", "#ff3333", new THREE.Vector3(3.2, 0, 0)),
+          );
+          scene.add(
+            createAxisLabel("Y", "#33ff33", new THREE.Vector3(0, 3.2, 0)),
+          );
+          scene.add(
+            createAxisLabel("Z", "#3333ff", new THREE.Vector3(0, 0, 3.2)),
+          );
 
-            const geometry = new THREE.BoxGeometry(2, 0.5, 3);
-            const material = new THREE.MeshPhongMaterial({ color: 0x00ff88, transparent: true, opacity: 0.8 });
-            const cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
+          const light = new THREE.DirectionalLight(0xffffff, 1);
+          light.position.set(1, 1, 5);
+          scene.add(light, new THREE.AmbientLight(0x404040));
 
-            scenes[id] = { scene, camera, renderer, labelRenderer, cube };
+          const geometry = new THREE.BoxGeometry(2, 0.5, 3);
+          const material = new THREE.MeshPhongMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.8,
+          });
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+
+          scenes[id] = { scene, camera, renderer, labelRenderer, cube };
         });
         animate();
-    }
+      }
 
-    function animate() {
+      function animate() {
         requestAnimationFrame(animate);
-        Object.values(scenes).forEach(s => {
-            s.renderer.render(s.scene, s.camera);
-            s.labelRenderer.render(s.scene, s.camera);
+        Object.values(scenes).forEach((s) => {
+          s.renderer.render(s.scene, s.camera);
+          s.labelRenderer.render(s.scene, s.camera);
         });
-    }
+      }
 
-    socket.on("sensors", (data) => {
-        devices.forEach(id => {
-            const statusEl = document.getElementById(`status-${id}`);
-            const s = scenes[id];
+      socket.on("sensors", (data) => {
+        devices.forEach((id) => {
+          const statusEl = document.getElementById(`status-${id}`);
+          const s = scenes[id];
 
-            if (data[id] && typeof data[id].x === 'number') {
-                statusEl.innerText = `X:${data[id].x} Y:${data[id].y} Z:${data[id].z}`;
-                statusEl.style.color = "#00ff88";
-                s.cube.rotation.set(toRad(data[id].x), toRad(data[id].y), toRad(data[id].z));
-                s.cube.visible = true;
-            } else {
-                statusEl.innerText = "Sensor not found";
-                statusEl.style.color = "#ff4444";
-                s.cube.visible = false;
-            }
+          if (data[id] && typeof data[id].x === "number") {
+            statusEl.innerText = `X:${data[id].x} Y:${data[id].y} Z:${data[id].z}`;
+            statusEl.style.color = "#00ff88";
+            s.cube.rotation.set(
+              toRad(data[id].x),
+              toRad(data[id].y),
+              toRad(data[id].z),
+            );
+            s.cube.visible = true;
+          } else {
+            statusEl.innerText = "Sensor not found";
+            statusEl.style.color = "#ff4444";
+            s.cube.visible = false;
+          }
         });
-    });
+      });
 
-    window.addEventListener('resize', () => {
-        devices.forEach(id => {
-            const container = document.getElementById(`card-${id}`);
-            const s = scenes[id];
-            s.camera.aspect = container.clientWidth / container.clientHeight;
-            s.camera.updateProjectionMatrix();
-            s.renderer.setSize(container.clientWidth, container.clientHeight);
-            s.labelRenderer.setSize(container.clientWidth, container.clientHeight);
+      window.addEventListener("resize", () => {
+        devices.forEach((id) => {
+          const container = document.getElementById(`card-${id}`);
+          const s = scenes[id];
+          s.camera.aspect = container.clientWidth / container.clientHeight;
+          s.camera.updateProjectionMatrix();
+          s.renderer.setSize(container.clientWidth, container.clientHeight);
+          s.labelRenderer.setSize(
+            container.clientWidth,
+            container.clientHeight,
+          );
         });
-    });
+      });
 
-    init();
-</script>
-</body>
+      init();
+    </script>
+  </body>
 </html>
