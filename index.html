@@ -35,6 +35,18 @@
         gap: 10px;
         width: 250px;
       }
+      #sc-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        width: 20px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+      }
       .control-group {
         display: flex;
         flex-direction: column;
@@ -70,6 +82,26 @@
       <hr style="width: 100%; border: 0; border-top: 1px solid #444" />
       <div id="status">Waiting for Socket...</div>
     </div>
+    <div id="sc-controls">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-fullscreen-icon lucide-fullscreen"
+      >
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+        <rect width="10" height="8" x="7" y="8" rx="1" />
+      </svg>
+    </div>
 
     <div id="canvas-container"></div>
 
@@ -78,8 +110,15 @@
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-      // --- Configuration ---
-      const socket = io("http://localhost:10002");
+      // Read parameter from URL
+      // customizable socketInput: http://thisweb?w=192.168.1.50:10002
+
+      const params = new URLSearchParams(window.location.search);
+
+      const wsTarget = params.get("w") || "localhost:10002";
+
+      // Create socket connection
+      const socket = io(`http://${wsTarget}`);
       const loader = new GLTFLoader();
       const toRad = (deg) => deg * (Math.PI / 180);
 
@@ -180,6 +219,16 @@
         document.getElementById("off-base").addEventListener("change", (e) => {
           saveOffsetToStorage(STORAGE_KEYS.base, e.target.value);
         });
+
+        document
+          .getElementById("sc-controls")
+          .addEventListener("click", (e) => {
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen();
+            } else {
+              document.exitFullscreen();
+            }
+          });
 
         animate();
       }
