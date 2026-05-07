@@ -1,99 +1,178 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Excavator Digital Twin</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
         }
+      }
     </script>
     <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
-        #canvas-container { width: 100vw; height: 100vh; }
-        #controls { 
-            position: absolute; top: 20px; left: 20px; 
-            background: rgba(0,0,0,0.8); padding: 20px; border-radius: 8px;
-            display: flex; flex-direction: column; gap: 10px; width: 250px;
-        }
-        .control-group { display: flex; flex-direction: column; }
-        input[type=range] { width: 100%; }
-        .val { float: right; color: #00ff88; }
+      body {
+        margin: 0;
+        background: #1a1a1a;
+        color: white;
+        font-family: sans-serif;
+      }
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+      }
+      #controls {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 250px;
+      }
+      #sc-controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        width: 20px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+      .val {
+        float: right;
+        color: #00ff88;
+      }
     </style>
-</head>
-<body>
-
-<div id="controls">
-    <h3>Sensor Offsets</h3>
-    <div class="control-group">
+  </head>
+  <body>
+    <div id="controls">
+      <h3>Sensor Offsets</h3>
+      <div class="control-group">
         <label>Boom Offset: <span id="v-boom" class="val">0°</span></label>
-        <input type="range" id="off-boom" min="-180" max="180" value="0">
-    </div>
-    <div class="control-group">
+        <input type="range" id="off-boom" min="-180" max="180" value="0" />
+      </div>
+      <div class="control-group">
         <label>Stick Offset: <span id="v-stick" class="val">0°</span></label>
-        <input type="range" id="off-stick" min="-180" max="180" value="0">
-    </div>
-    <div class="control-group">
+        <input type="range" id="off-stick" min="-180" max="180" value="0" />
+      </div>
+      <div class="control-group">
         <label>Bucket Offset: <span id="v-bucket" class="val">0°</span></label>
-        <input type="range" id="off-bucket" min="-180" max="180" value="0">
+        <input type="range" id="off-bucket" min="-180" max="180" value="0" />
+      </div>
+      <div class="control-group">
+        <label>Base Offset: <span id="v-base" class="val">0°</span></label>
+        <input type="range" id="off-base" min="-180" max="180" value="0" />
+      </div>
+      <hr style="width: 100%; border: 0; border-top: 1px solid #444" />
+      <div id="status">Waiting for Socket...</div>
     </div>
-    <hr style="width:100%; border:0; border-top:1px solid #444">
-    <div id="status">Waiting for Socket...</div>
-</div>
+    <div id="sc-controls">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-fullscreen-icon lucide-fullscreen"
+      >
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+        <rect width="10" height="8" x="7" y="8" rx="1" />
+      </svg>
+    </div>
 
-<div id="canvas-container"></div>
+    <div id="canvas-container"></div>
 
-<script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-    // --- Configuration ---
-    const socket = io("http://localhost:10002");
-    const loader = new GLTFLoader();
-    const toRad = (deg) => deg * (Math.PI / 180);
+      // Read parameter from URL
+      // customizable socketInput: http://thisweb?w=192.168.1.50:10002
 
-    let scene, camera, renderer, controls, modelParts = {};
-    let sensorData = { dev1: 0, dev2: 0, dev3: 0 };
+      const params = new URLSearchParams(window.location.search);
 
-    // localStorage keys
-    const STORAGE_KEYS = {
-        boom: 'offset_boom',
-        stick: 'offset_stick',
-        bucket: 'offset_bucket'
-    };
+      const wsTarget = params.get("w") || "localhost:10002";
 
-    function loadOffsetsFromStorage() {
-        const boom = localStorage.getItem(STORAGE_KEYS.boom) || '0';
-        const stick = localStorage.getItem(STORAGE_KEYS.stick) || '0';
-        const bucket = localStorage.getItem(STORAGE_KEYS.bucket) || '0';
+      // Create socket connection
+      const socket = io(`http://${wsTarget}`);
+      const loader = new GLTFLoader();
+      const toRad = (deg) => deg * (Math.PI / 180);
 
-        document.getElementById('off-boom').value = boom;
-        document.getElementById('off-stick').value = stick;
-        document.getElementById('off-bucket').value = bucket;
-    }
+      let scene,
+        camera,
+        renderer,
+        controls,
+        modelParts = {};
+      let sensorData = { dev1: 0, dev2: 0, dev3: 0, dev4: 0 };
 
-    function saveOffsetToStorage(key, value) {
+      // localStorage keys
+      const STORAGE_KEYS = {
+        boom: "offset_boom",
+        stick: "offset_stick",
+        bucket: "offset_bucket",
+        base: "offset_base",
+      };
+
+      function loadOffsetsFromStorage() {
+        const boom = localStorage.getItem(STORAGE_KEYS.boom) || "0";
+        const stick = localStorage.getItem(STORAGE_KEYS.stick) || "0";
+        const bucket = localStorage.getItem(STORAGE_KEYS.bucket) || "0";
+        const base = localStorage.getItem(STORAGE_KEYS.base) || "0";
+
+        document.getElementById("off-boom").value = boom;
+        document.getElementById("off-stick").value = stick;
+        document.getElementById("off-bucket").value = bucket;
+        document.getElementById("off-base").value = base;
+      }
+
+      function saveOffsetToStorage(key, value) {
         localStorage.setItem(key, value);
-    }
+      }
 
-    function init() {
+      function init() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222);
 
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        );
         camera.position.set(15, 10, 15);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        document
+          .getElementById("canvas-container")
+          .appendChild(renderer.domElement);
 
         controls = new OrbitControls(camera, renderer.domElement);
-        
+
         // Lighting
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
         scene.add(hemiLight);
@@ -106,76 +185,102 @@
         scene.add(grid);
 
         // Load Model (Using your part names: Boom0, Stick, Bucket)
-        loader.load('/Excavator Simple.glb', (gltf) => {
-            const model = gltf.scene;
-            scene.add(model);
-            model.position.set(0,0,+47.5)
+        loader.load("/Excavator Simple.glb", (gltf) => {
+          const model = gltf.scene;
+          scene.add(model);
+          model.position.set(0, 0, +47.5);
 
-            // Mapping nodes similar to your React component
-            model.traverse((child) => {
-                if (child.name === 'Boom0') modelParts.boom = child;
-                if (child.name === 'Stick') modelParts.stick = child;
-                if (child.name === 'Bucket') modelParts.bucket = child;
-            });
-            
-            console.log("Model loaded. Found parts:", Object.keys(modelParts));
+          // Mapping nodes similar to your React component
+          model.traverse((child) => {
+            if (child.name === "Boom0") modelParts.boom = child;
+            if (child.name === "Stick") modelParts.stick = child;
+            if (child.name === "Bucket") modelParts.bucket = child;
+            if (child.name === "Bone") modelParts.base = child;
+          });
+
+          console.log("Model loaded. Found parts:", Object.keys(modelParts));
         });
 
         // Load offsets from localStorage
         loadOffsetsFromStorage();
 
         // Add event listeners to save offsets when changed
-        document.getElementById('off-boom').addEventListener('change', (e) => {
-            saveOffsetToStorage(STORAGE_KEYS.boom, e.target.value);
+        document.getElementById("off-boom").addEventListener("change", (e) => {
+          saveOffsetToStorage(STORAGE_KEYS.boom, e.target.value);
         });
-        document.getElementById('off-stick').addEventListener('change', (e) => {
-            saveOffsetToStorage(STORAGE_KEYS.stick, e.target.value);
+        document.getElementById("off-stick").addEventListener("change", (e) => {
+          saveOffsetToStorage(STORAGE_KEYS.stick, e.target.value);
         });
-        document.getElementById('off-bucket').addEventListener('change', (e) => {
+        document
+          .getElementById("off-bucket")
+          .addEventListener("change", (e) => {
             saveOffsetToStorage(STORAGE_KEYS.bucket, e.target.value);
+          });
+        document.getElementById("off-base").addEventListener("change", (e) => {
+          saveOffsetToStorage(STORAGE_KEYS.base, e.target.value);
         });
+
+        document
+          .getElementById("sc-controls")
+          .addEventListener("click", (e) => {
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen();
+            } else {
+              document.exitFullscreen();
+            }
+          });
 
         animate();
-    }
+      }
 
-    function animate() {
+      function animate() {
         requestAnimationFrame(animate);
         updateRotations();
         renderer.render(scene, camera);
-    }
+      }
 
-    function updateRotations() {
-        const offBoom = parseFloat(document.getElementById('off-boom').value);
-        const offStick = parseFloat(document.getElementById('off-stick').value);
-        const offBucket = parseFloat(document.getElementById('off-bucket').value);
+      function updateRotations() {
+        const offBoom = parseFloat(document.getElementById("off-boom").value);
+        const offStick = parseFloat(document.getElementById("off-stick").value);
+        const offBucket = parseFloat(
+          document.getElementById("off-bucket").value,
+        );
+        const offBase = parseFloat(document.getElementById("off-base").value);
 
         // Update UI Text
-        document.getElementById('v-boom').innerText = offBoom + "°";
-        document.getElementById('v-stick').innerText = offStick + "°";
-        document.getElementById('v-bucket').innerText = offBucket + "°";
+        document.getElementById("v-boom").innerText = offBoom + "°";
+        document.getElementById("v-stick").innerText = offStick + "°";
+        document.getElementById("v-bucket").innerText = offBucket + "°";
+        document.getElementById("v-base").innerText = offBase + "°";
 
         // Apply to model (assuming X rotation based on your React code)
-        if (modelParts.boom) modelParts.boom.rotation.x = toRad(sensorData.dev1 + offBoom);
-        if (modelParts.stick) modelParts.stick.rotation.x = toRad(sensorData.dev2 + offStick);
-        if (modelParts.bucket) modelParts.bucket.rotation.x = toRad(sensorData.dev3 + offBucket);
-    }
+        if (modelParts.boom)
+          modelParts.boom.rotation.x = toRad(sensorData.dev1 + offBoom);
+        if (modelParts.stick)
+          modelParts.stick.rotation.x = toRad(sensorData.dev2 + offStick);
+        if (modelParts.bucket)
+          modelParts.bucket.rotation.x = toRad(sensorData.dev3 + offBucket);
+        if (modelParts.base)
+          modelParts.base.rotation.z = toRad(sensorData.dev4 + offBase);
+      }
 
-    socket.on("sensors", (data) => {
-        document.getElementById('status').innerText = "Receiving Data...";
-        // We assume dev1=Boom, dev2=Stick, dev3=Bucket
+      socket.on("sensors", (data) => {
+        document.getElementById("status").innerText = "Receiving Data...";
+        // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
         if (data.dev1?.x !== undefined) sensorData.dev1 = data.dev1.x;
         if (data.dev2?.x !== undefined) sensorData.dev2 = data.dev2.x;
         if (data.dev3?.x !== undefined) sensorData.dev3 = data.dev3.x;
-    });
+        if (data.dev4?.x !== undefined) sensorData.dev4 = data.dev4.x;
+      });
 
-    window.addEventListener('resize', () => {
+      window.addEventListener("resize", () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      });
 
-    init();
-</script>
-</body>
+      init();
+    </script>
+  </body>
 </html>
