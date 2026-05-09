@@ -95,7 +95,7 @@
       const wsTarget = params.get("w") || "localhost:10002";
 
       // Create socket connection
-      const socket = io(`http://${wsTarget}`);
+      const socket = io(`https://${wsTarget}`);
 
       const devices = ["dev1", "dev2", "dev3", "dev4"];
       const scenes = {};
