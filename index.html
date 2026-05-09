@@ -118,7 +118,10 @@
       const wsTarget = params.get("w") || "localhost:10002";
 
       // Create socket connection
-      const socket = io(`https://${wsTarget}`);
+      // const socket = io(`https://${wsTarget}`);
+      const socket = io("https://overdue-figment-disrupt.ngrok-free.dev", {
+        transports: ["websocket"],
+      });
       const loader = new GLTFLoader();
       const toRad = (deg) => deg * (Math.PI / 180);
 
