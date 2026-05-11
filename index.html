@@ -321,7 +321,7 @@
         // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
         if (data.dev1?.y !== undefined) {
-          sensorData.dev1 = 0 - data.dev1.y;
+          sensorData.dev1 = data.dev1.y;
           document.getElementById("sen1").innerText = data.dev1.y;
         }
         if (data.dev2?.y !== undefined) {
