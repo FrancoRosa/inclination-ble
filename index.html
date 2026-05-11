@@ -82,30 +82,42 @@
     <div id="controls">
       <h3>Sensor Offsets</h3>
       <div class="control-group">
-        <div class="sign-toggle">
-          <label><input type="checkbox" id="sign-boom" /> Negative</label>
+        <div
+          class="sign-toggle"
+          style="display: flex; justify-content: space-between"
+        >
           <span>Boom Offset: <span id="v-boom" class="val">0°</span></span>
+          <label><input type="checkbox" id="sign-boom" />&plusmn</label>
         </div>
         <input type="range" id="off-boom" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <div class="sign-toggle">
-          <label><input type="checkbox" id="sign-stick" /> Negative</label>
+        <div
+          class="sign-toggle"
+          style="display: flex; justify-content: space-between"
+        >
           <span>Stick Offset: <span id="v-stick" class="val">0°</span></span>
+          <label><input type="checkbox" id="sign-stick" />&plusmn</label>
         </div>
         <input type="range" id="off-stick" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <div class="sign-toggle">
-          <label><input type="checkbox" id="sign-bucket" /> Negative</label>
+        <div
+          class="sign-toggle"
+          style="display: flex; justify-content: space-between"
+        >
           <span>Bucket Offset: <span id="v-bucket" class="val">0°</span></span>
+          <label><input type="checkbox" id="sign-bucket" />&plusmn</label>
         </div>
         <input type="range" id="off-bucket" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <div class="sign-toggle">
-          <label><input type="checkbox" id="sign-base" /> Negative</label>
+        <div
+          class="sign-toggle"
+          style="display: flex; justify-content: space-between"
+        >
           <span>Base Offset: <span id="v-base" class="val">0°</span></span>
+          <label><input type="checkbox" id="sign-base" />&plusmn</label>
         </div>
         <input type="range" id="off-base" min="-180" max="180" value="0" />
       </div>
