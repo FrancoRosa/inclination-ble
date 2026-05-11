@@ -389,7 +389,7 @@
         }
         if (data.dev2?.y !== undefined) {
           sensorData.dev2 =
-            (0 - data.dev2.y) *
+            data.dev2.y *
             (document.getElementById("sign-stick").checked ? -1 : 1);
           document.getElementById("sen2").innerText = data.dev2.y;
         }
@@ -401,7 +401,7 @@
         }
         if (data.dev3?.z !== undefined) {
           sensorData.dev4 =
-            (0 - data.dev3.z) *
+            data.dev3.z *
             (document.getElementById("sign-base").checked ? -1 : 1);
           document.getElementById("sen3").innerText = data.dev3.z;
         }
