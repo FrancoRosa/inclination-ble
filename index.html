@@ -333,7 +333,7 @@
           document.getElementById("sen4").innerText = data.dev4.x;
         }
         if (data.dev3?.z !== undefined) {
-          sensorData.dev4 = data.dev3.z;
+          sensorData.dev4 = 0 - data.dev3.z;
           document.getElementById("sen3").innerText = data.dev3.z;
         }
       });
