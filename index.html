@@ -71,25 +71,42 @@
         float: right;
         color: #00ff88;
       }
+      .sign-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
     </style>
   </head>
   <body>
     <div id="controls">
       <h3>Sensor Offsets</h3>
       <div class="control-group">
-        <label>Boom Offset: <span id="v-boom" class="val">0°</span></label>
+        <div class="sign-toggle">
+          <label><input type="checkbox" id="sign-boom" /> Negative</label>
+          <span>Boom Offset: <span id="v-boom" class="val">0°</span></span>
+        </div>
         <input type="range" id="off-boom" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <label>Stick Offset: <span id="v-stick" class="val">0°</span></label>
+        <div class="sign-toggle">
+          <label><input type="checkbox" id="sign-stick" /> Negative</label>
+          <span>Stick Offset: <span id="v-stick" class="val">0°</span></span>
+        </div>
         <input type="range" id="off-stick" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <label>Bucket Offset: <span id="v-bucket" class="val">0°</span></label>
+        <div class="sign-toggle">
+          <label><input type="checkbox" id="sign-bucket" /> Negative</label>
+          <span>Bucket Offset: <span id="v-bucket" class="val">0°</span></span>
+        </div>
         <input type="range" id="off-bucket" min="-180" max="180" value="0" />
       </div>
       <div class="control-group">
-        <label>Base Offset: <span id="v-base" class="val">0°</span></label>
+        <div class="sign-toggle">
+          <label><input type="checkbox" id="sign-base" /> Negative</label>
+          <span>Base Offset: <span id="v-base" class="val">0°</span></span>
+        </div>
         <input type="range" id="off-base" min="-180" max="180" value="0" />
       </div>
       <hr style="width: 100%; border: 0; border-top: 1px solid #444" />
@@ -175,6 +192,10 @@
         stick: "offset_stick",
         bucket: "offset_bucket",
         base: "offset_base",
+        sign_boom: "sign_boom",
+        sign_stick: "sign_stick",
+        sign_bucket: "sign_bucket",
+        sign_base: "sign_base",
       };
 
       function loadOffsetsFromStorage() {
@@ -187,6 +208,16 @@
         document.getElementById("off-stick").value = stick;
         document.getElementById("off-bucket").value = bucket;
         document.getElementById("off-base").value = base;
+
+        // Load signs
+        document.getElementById("sign-boom").checked =
+          localStorage.getItem(STORAGE_KEYS.sign_boom) === "true";
+        document.getElementById("sign-stick").checked =
+          localStorage.getItem(STORAGE_KEYS.sign_stick) === "true";
+        document.getElementById("sign-bucket").checked =
+          localStorage.getItem(STORAGE_KEYS.sign_bucket) === "true";
+        document.getElementById("sign-base").checked =
+          localStorage.getItem(STORAGE_KEYS.sign_base) === "true";
       }
 
       function saveOffsetToStorage(key, value) {
@@ -260,6 +291,24 @@
           saveOffsetToStorage(STORAGE_KEYS.base, e.target.value);
         });
 
+        // Sign toggles
+        document.getElementById("sign-boom").addEventListener("change", (e) => {
+          localStorage.setItem(STORAGE_KEYS.sign_boom, e.target.checked);
+        });
+        document
+          .getElementById("sign-stick")
+          .addEventListener("change", (e) => {
+            localStorage.setItem(STORAGE_KEYS.sign_stick, e.target.checked);
+          });
+        document
+          .getElementById("sign-bucket")
+          .addEventListener("change", (e) => {
+            localStorage.setItem(STORAGE_KEYS.sign_bucket, e.target.checked);
+          });
+        document.getElementById("sign-base").addEventListener("change", (e) => {
+          localStorage.setItem(STORAGE_KEYS.sign_base, e.target.checked);
+        });
+
         document
           .getElementById("sc-controls")
           .addEventListener("click", (e) => {
@@ -321,19 +370,27 @@
         // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
         if (data.dev1?.y !== undefined) {
-          sensorData.dev1 = data.dev1.y;
+          sensorData.dev1 =
+            data.dev1.y *
+            (document.getElementById("sign-boom").checked ? -1 : 1);
           document.getElementById("sen1").innerText = data.dev1.y;
         }
         if (data.dev2?.y !== undefined) {
-          sensorData.dev2 = 0 - data.dev2.y;
+          sensorData.dev2 =
+            (0 - data.dev2.y) *
+            (document.getElementById("sign-stick").checked ? -1 : 1);
           document.getElementById("sen2").innerText = data.dev2.y;
         }
         if (data.dev4?.x !== undefined) {
-          sensorData.dev3 = data.dev4.x;
+          sensorData.dev3 =
+            data.dev4.x *
+            (document.getElementById("sign-bucket").checked ? -1 : 1);
           document.getElementById("sen4").innerText = data.dev4.x;
         }
         if (data.dev3?.z !== undefined) {
-          sensorData.dev4 = 0 - data.dev3.z;
+          sensorData.dev4 =
+            (0 - data.dev3.z) *
+            (document.getElementById("sign-base").checked ? -1 : 1);
           document.getElementById("sen3").innerText = data.dev3.z;
         }
       });
