@@ -367,12 +367,15 @@
         document.getElementById("v-base").innerText = offBase + "°";
 
         // Apply to model (assuming X rotation based on your React code)
-        if (modelParts.boom)
-          modelParts.boom.rotation.x = toRad(sensorData.dev1 + offBoom);
         if (modelParts.stick)
-          modelParts.stick.rotation.x = toRad(sensorData.dev2 + offStick);
+          modelParts.stick.rotation.x = toRad(sensorData.dev1 + offBoom);
+
+        if (modelParts.boom)
+          modelParts.boom.rotation.x = toRad(sensorData.dev2 + offStick);
+
         if (modelParts.bucket)
           modelParts.bucket.rotation.x = toRad(sensorData.dev3 + offBucket);
+
         if (modelParts.base)
           modelParts.base.rotation.z = toRad(sensorData.dev4 + offBase);
       }
