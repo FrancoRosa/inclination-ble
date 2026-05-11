@@ -94,6 +94,12 @@
       </div>
       <hr style="width: 100%; border: 0; border-top: 1px solid #444" />
       <div id="status">Waiting for Socket...</div>
+      <div style="width: 100%; display: flex; justify-content: space-between">
+        <div id="sen1">0</div>
+        <div id="sen2">0</div>
+        <div id="sen3">0</div>
+        <div id="sen4">0</div>
+      </div>
     </div>
     <div id="sc-controls">
       <svg
@@ -314,10 +320,22 @@
         document.getElementById("status").innerText = "Receiving Data...";
         // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
-        if (data.dev1?.y !== undefined) sensorData.dev1 = 0 - data.dev1.y;
-        if (data.dev2?.y !== undefined) sensorData.dev2 = 0 - data.dev2.y;
-        if (data.dev4?.x !== undefined) sensorData.dev3 = data.dev4.x;
-        if (data.dev3?.z !== undefined) sensorData.dev4 = data.dev3.z;
+        if (data.dev1?.y !== undefined) {
+          sensorData.dev1 = 0 - data.dev1.y;
+          document.getElementById("sen1").innerText = data.dev1.y;
+        }
+        if (data.dev2?.y !== undefined) {
+          sensorData.dev2 = 0 - data.dev2.y;
+          document.getElementById("sen2").innerText = data.dev2.y;
+        }
+        if (data.dev4?.x !== undefined) {
+          sensorData.dev3 = data.dev4.x;
+          document.getElementById("sen4").innerText = data.dev4.x;
+        }
+        if (data.dev3?.z !== undefined) {
+          sensorData.dev4 = data.dev3.z;
+          document.getElementById("sen3").innerText = data.dev3.z;
+        }
       });
 
       window.addEventListener("resize", () => {
