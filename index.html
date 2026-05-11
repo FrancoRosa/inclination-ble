@@ -381,11 +381,11 @@
         document.getElementById("status").innerText = "Receiving Data...";
         // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
-        if (data.dev1?.y !== undefined) {
-          sensorData.dev1 =
-            data.dev1.y *
+        if (data.dev1?.z !== undefined) {
+          sensorData.dev4 =
+            data.dev1.z *
             (document.getElementById("sign-boom").checked ? -1 : 1);
-          document.getElementById("sen1").innerText = data.dev1.y;
+          document.getElementById("sen1").innerText = data.dev1.z;
         }
         if (data.dev2?.y !== undefined) {
           sensorData.dev2 =
@@ -393,17 +393,17 @@
             (document.getElementById("sign-stick").checked ? -1 : 1);
           document.getElementById("sen2").innerText = data.dev2.y;
         }
-        if (data.dev4?.x !== undefined) {
+        if (data.dev3.y !== undefined) {
           sensorData.dev3 =
-            data.dev4.x *
+            data.dev3.y *
             (document.getElementById("sign-bucket").checked ? -1 : 1);
-          document.getElementById("sen4").innerText = data.dev4.x;
+          document.getElementById("sen4").innerText = data.dev3.y;
         }
-        if (data.dev3?.z !== undefined) {
-          sensorData.dev4 =
-            data.dev3.z *
+        if (data.dev4?.y !== undefined) {
+          sensorData.dev1 =
+            data.dev4.y *
             (document.getElementById("sign-base").checked ? -1 : 1);
-          document.getElementById("sen3").innerText = data.dev3.z;
+          document.getElementById("sen3").innerText = data.dev4.y;
         }
       });
 
