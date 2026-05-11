@@ -271,7 +271,7 @@
         document.getElementById("status").innerText = "Receiving Data...";
         // We assume dev1=Boom, dev2=Stick, dev3=Bucket, dev4=Base
         // Extracting X angle as the primary inclination
-        if (data.dev1?.x !== undefined) sensorData.dev1 = data.dev1.x;
+        if (data.dev1?.x !== undefined) sensorData.dev1 = 0 - data.dev1.y;
         if (data.dev2?.x !== undefined) sensorData.dev2 = data.dev2.x;
         if (data.dev3?.x !== undefined) sensorData.dev3 = data.dev3.x;
         if (data.dev4?.z !== undefined) sensorData.dev4 = data.dev4.z;
