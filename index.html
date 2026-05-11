@@ -316,8 +316,8 @@
         // Extracting X angle as the primary inclination
         if (data.dev1?.x !== undefined) sensorData.dev1 = 0 - data.dev1.y;
         if (data.dev2?.x !== undefined) sensorData.dev2 = 0 - data.dev2.y;
-        if (data.dev3?.x !== undefined) sensorData.dev3 = data.dev3.x;
-        if (data.dev4?.z !== undefined) sensorData.dev4 = data.dev4.z;
+        if (data.dev3?.x !== undefined) sensorData.dev3 = data.dev4.x;
+        if (data.dev4?.z !== undefined) sensorData.dev4 = data.dev3.z;
       });
 
       window.addEventListener("resize", () => {
